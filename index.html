@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAUST French - Elite Study Portal</title>
+    <link rel="icon" href="https://fav.farm/🇫🇷">
+    
+    <style>
+        /* CSS VARIABLES - FINAL POLISH */
+        :root {
+            --bg-body: #f4f7f6; --bg-card: #ffffff; --bg-nav: #f4f7f6; --bg-selector: #eef2f3;
+            --text-main: #2c3e50; --text-muted: #7f8c8d; --border: #e0e6ed; --input-border: #dcdde1;
+            --primary: #002654; --accent: #ED2939; --gold: #f1c40f; --green: #27ae60; --white: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg-body: #121418; --bg-card: #1e2227; --bg-nav: #121418; --bg-selector: #181b1f;
+            --text-main: #ecf0f1; --text-muted: #95a5a6; --border: #2c313a; --input-border: #3b424d;
+            --primary: #4da3ff; --accent: #ff6b6b; --green: #2ecc71;
+        }
+
+        * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg-body); margin: 0; padding: 20px; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        .container { max-width: 1200px; width: 95%; margin: auto; text-align: center; flex: 1; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        h1 { margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .theme-switch-wrapper { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); }
+        .theme-switch { display: inline-block; height: 28px; position: relative; width: 54px; }
+        .theme-switch input { display:none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 34px; }
+        .slider:before { background-color: white; bottom: 4px; content: ""; height: 20px; left: 4px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        nav { margin-bottom: 20px; position: sticky; top: 0; background: var(--bg-nav); padding: 10px; z-index: 100; border-radius: 12px; border: 1px solid transparent; display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; }
+        nav.sticky-active { border-color: var(--border); background: var(--bg-card); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        
+        button { padding: 12px 22px; cursor: pointer; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; font-size: 1rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); filter: brightness(1.1); }
+        button:active { transform: translateY(1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .active-btn { background: var(--accent) !important; box-shadow: 0 4px 12px rgba(237, 41, 57, 0.4); }
+
+        .view-section { display: none; background: var(--bg-card); padding: 40px 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); margin-top: 10px; border: 1px solid var(--border); }
+        .active-view { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* GAMIFICATION HUD */
+        .stats-hud { display: none; justify-content: center; gap: 40px; margin-bottom: 20px; padding: 15px 30px; background: var(--bg-selector); border-radius: 12px; font-size: 1.25rem; font-weight: 800; border: 1px solid var(--border); }
+        .stat-score { color: var(--primary); }
+        .stat-streak { color: #e67e22; }
+        .streak-fire { animation: pulse 1s infinite alternate; display: inline-block; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.25); } }
+
+        .list-container { text-align: left; margin-bottom: 50px; scroll-margin-top: 100px; }
+        h2 { color: var(--primary); border-bottom: 3px solid var(--accent); display: inline-block; padding-bottom: 5px; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--bg-card); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border); }
+        th, td { border-bottom: 1px solid var(--border); padding: 16px 15px; text-align: left; font-size: 1.1rem; }
+        th { background: var(--primary); color: white; font-weight: 600; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 0.5px; }
+        tr:last-child td { border-bottom: none; }
+
+        .mode-selector { background: var(--bg-selector); padding: 15px; border-radius: 12px; margin-bottom: 30px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--border); }
+        .mode-selector span { font-weight: 700; color: var(--primary); margin-right: 10px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .filter-btn { background: var(--text-muted); padding: 8px 18px; box-shadow: none; font-size: 0.95rem; border-radius: 20px; }
+        .filter-btn.active-filter { background: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+        /* FLASHCARDS */
+        .card { width: 500px; height: 300px; margin: 20px auto; perspective: 1000px; cursor: pointer; max-width: 100%; }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 2.5rem; border-radius: 20px; border: 4px solid var(--primary); padding: 30px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.08); background: var(--bg-card); font-weight: 700; }
+        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); }
+        .card-subtext { font-size: 1rem; font-weight: normal; margin-top: 10px; opacity: 0.8; }
+
+        .button-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 25px; }
+        
+        /* INPUTS */
+        input { padding: 20px; font-size: 1.3rem; font-weight: 500; border-radius: 14px; border: 2px solid var(--input-border); background: var(--bg-card); color: var(--text-main); width: 100%; max-width: 600px; transition: all 0.3s; outline: none; text-align: center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 38, 84, 0.1); }
+        [data-theme="dark"] input:focus { box-shadow: 0 0 0 4px rgba(77, 163, 255, 0.15); }
+
+        /* SHAKE ANIMATION FOR WRONG ANSWERS */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-8px); } }
+        .shake-error { animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; border-color: var(--accent) !important; color: var(--accent); }
+
+        /* ELITE ACCENT BAR */
+        .accent-bar { display: flex; justify-content: center; gap: 10px; margin: 15px auto 25px auto; flex-wrap: wrap; max-width: 600px; }
+        .accent-btn { background: var(--bg-selector); color: var(--primary); padding: 10px 18px; font-size: 1.3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .accent-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+        .accent-btn:active { transform: translateY(1px); }
+
+        .feedback { margin-top: 20px; font-size: 1.3rem; font-weight: 700; min-height: 1.6em; transition: color 0.3s; }
+
+        footer { margin-top: auto; padding: 30px 20px; font-size: 1rem; color: var(--text-muted); border-top: 1px solid var(--border); font-weight: 500; }
+        .signature { font-weight: 800; color: var(--primary); transition: color 0.3s; }
+        .signature:hover { color: var(--accent); }
+        
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 9999; pointer-events: none; }
+    </style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+    <header>
+        <h1>🇫🇷 KAUST French Portal</h1>
+        <div class="theme-switch-wrapper">
+            <span>🌙 Dark Mode</span>
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" onchange="toggleTheme(this)" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+    </header>
+    
+    <nav id="main-nav">
+        <button id="btn-list" onclick="showView('list')" class="active-btn">📋 Vocab Lists</button>
+        <button id="btn-flash" onclick="withModeInit('flash')">🗂️ Flashcards</button>
+        <button id="btn-quiz" onclick="withModeInit('quiz')">🧠 Quiz (Fr → Eng)</button>
+        <button id="btn-spell" onclick="withModeInit('spell')">✍️ Spelling (Eng → Fr)</button>
+    </nav>
+    
+    <div id="stats-hud" class="stats-hud">
+        <div class="stat-score">Score: <span id="score-val">0</span></div>
+        <div class="stat-streak">Streak: <span class="streak-fire">🔥</span> <span id="streak-val">0</span></div>
+    </div>
+
+    <div id="list" class="view-section active-view">
+        <div class="mode-selector">
+            <span>Quick Jump:</span>
+            <button onclick="scrollToElement('list1')" style="background:var(--accent)">List 1</button>
+            <button onclick="scrollToElement('list2')" style="background:var(--accent)">List 2</button>
+        </div>
+        <div id="list1" class="list-container">
+            <h2>List 1: General Vocabulary</h2>
+            <table id="table1"><thead><tr><th>French</th><th>English</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div id="list2" class="list-container">
+            <h2>List 2: Des écoles différentes</h2>
+            <table id="table2"><thead><tr><th>French</th><th>English</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <div id="flash" class="view-section">
+        <div class="mode-selector">
+            <span>Study Pool:</span>
+            <button id="flash-filter-both" class="filter-btn active-filter" onclick="setFilter('flash', 'both')">Both Lists</button>
+            <button id="flash-filter-1" class="filter-btn" onclick="setFilter('flash', '1')">List 1 Only</button>
+            <button id="flash-filter-2" class="filter-btn" onclick="setFilter('flash', '2')">List 2 Only</button>
+        </div>
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front" id="flash-front">Word</div>
+                <div class="card-back">
+                    <div id="flash-back">Translation</div>
+                    <div id="flash-back-sub" class="card-subtext"></div>
+                </div>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="btn-prev" onclick="prevFlashcard()" style="background:var(--text-muted); visibility: hidden;">← Back</button>
+            <button onclick="speakFrench(currentFlash.fr)" style="background:#34495e">🔊 Listen</button>
+            <button onclick="nextFlashcard()" style="background:var(--accent)">Next Card →</button>
+        </div>
+    </div>
+
+    <div id="quiz" class="view-section">
+        <div class="mode-selector">
+            <span>Quiz Pool:</span>
+            <button id="quiz-filter-both" class="filter-btn active-filter" onclick="setFilter('quiz', 'both')">Both</button>
+            <button id="quiz-filter-1" class="filter-btn" onclick="setFilter('quiz', '1')">List 1</button>
+            <button id="quiz-filter-2" class="filter-btn" onclick="setFilter('quiz', '2')">List 2</button>
+        </div>
+        <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 5px;">Translate to <strong>English</strong>:</p>
+        <div id="quiz-word" style="font-size: 3rem; color: var(--primary); font-weight: 800; margin-bottom: 15px;">---</div>
+        <button onclick="speakFrench(currentQuiz.fr)" style="background:#34495e; margin-bottom: 25px; font-size: 0.9rem; padding: 8px 16px; border-radius: 20px;">🔊 Hear Word</button>
+        <br>
+        <input type="text" id="quiz-input" placeholder="Type English meaning..." autocomplete="off">
+        <div id="quiz-feedback" class="feedback"></div>
+        <div class="button-group">
+            <button onclick="checkQuiz()">Submit Answer</button>
+            <button onclick="skipQuestion('quiz')" style="background:var(--text-muted)">Skip</button>
+        </div>
+    </div>
+
+    <div id="spell" class="view-section">
+        <div class="mode-selector">
+            <span>Spell Pool:</span>
+            <button id="spell-filter-both" class="filter-btn active-filter" onclick="setFilter('spell', 'both')">Both</button>
+            <button id="spell-filter-1" class="filter-btn" onclick="setFilter('spell', '1')">List 1</button>
+            <button id="spell-filter-2" class="filter-btn" onclick="setFilter('spell', '2')">List 2</button>
+        </div>
+        <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 5px;">Type in <strong>French</strong> (Watch accents!):</p>
+        <div id="spell-word" style="font-size: 3rem; color: var(--primary); font-weight: 800; margin-bottom: 25px;">---</div>
+        
+        <input type="text" id="spell-input" placeholder="Type French spelling..." autocomplete="off">
+        
+        <div class="accent-bar">
+            <button class="accent-btn" onclick="insertAccent('é')">é</button>
+            <button class="accent-btn" onclick="insertAccent('è')">è</button>
+            <button class="accent-btn" onclick="insertAccent('ç')">ç</button>
+            <button class="accent-btn" onclick="insertAccent('à')">à</button>
+            <button class="accent-btn" onclick="insertAccent('ù')">ù</button>
+            <button class="accent-btn" onclick="insertAccent('ô')">ô</button>
+            <button class="accent-btn" onclick="insertAccent('â')">â</button>
+            <button class="accent-btn" onclick="insertAccent('ê')">ê</button>
+            <button class="accent-btn" onclick="insertAccent('î')">î</button>
+        </div>
+
+        <div id="spell-feedback" class="feedback"></div>
+        <div class="button-group">
+            <button onclick="checkSpell()">Submit Answer</button>
+            <button onclick="showSpellAnswer()" style="background:#e67e22">Show Answer</button>
+            <button onclick="skipQuestion('spell')" style="background:var(--text-muted)">Skip</button>
+        </div>
+    </div>
+
+    <footer>
+        Perfected for French Class by <span class="signature">Shafay & Gemini</span>
+    </footer>
+</div>
+
+<script>
+    // --- AUDIO SYNTHESIZER ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    const SFX = {
+        playTone: function(freq, type, duration, vol) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        },
+        click: function() { this.playTone(350, 'sine', 0.1, 0.05); },
+        correct: function() { 
+            this.playTone(523.25, 'sine', 0.1, 0.1); // C5
+            setTimeout(() => this.playTone(659.25, 'sine', 0.1, 0.1), 100); // E5
+            setTimeout(() => this.playTone(783.99, 'sine', 0.3, 0.1), 200); // G5
+        },
+        wrong: function() {
+            this.playTone(200, 'sawtooth', 0.2, 0.1);
+            setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.1), 150);
+        },
+        halfPoint: function() {
+            this.playTone(440, 'triangle', 0.15, 0.1);
+            setTimeout(() => this.playTone(440, 'triangle', 0.3, 0.1), 150);
+        }
+    };
+
+    // Add click sound to all buttons
+    document.addEventListener('click', (e) => {
+        if(e.target.tagName === 'BUTTON' || e.target.classList.contains('accent-btn')) {
+            SFX.click();
+        }
+    });
+
+    // --- DATA WITH SYNONYMS ---
+    const list1 = [
+        { fr: "acheter", en: "to buy", alts: ["buy", "purchase"] }, 
+        { fr: "les affaires (f)", en: "belongings", alts: ["stuff", "things"] }, 
+        { fr: "l'animal en peluche", en: "cuddly toy", alts: ["stuffed animal", "plushie", "soft toy"] }, 
+        { fr: "apprendre", en: "to learn", alts: ["learn", "study"] }, 
+        { fr: "l'arbre (m)", en: "tree", alts: [] }, 
+        { fr: "le car", en: "coach", alts: ["bus", "tour bus", "coach bus"] }, 
+        { fr: "le cartable", en: "school bag", alts: ["backpack", "bag", "schoolbag"] }, 
+        { fr: "commencer", en: "to start", alts: ["start", "begin", "to begin"] }, 
+        { fr: "comprendre", en: "to understand", alts: ["understand", "comprehend"] }, 
+        { fr: "demander", en: "to ask", alts: ["ask", "request"] }, 
+        { fr: "distribuer", en: "to give out", alts: ["give out", "distribute", "hand out"] }, 
+        { fr: "l'emploi du temps", en: "timetable", alts: ["schedule"] }, 
+        { fr: "énerver", en: "to annoy", alts: ["annoy", "irritate", "to irritate"] }, 
+        { fr: "finir", en: "to finish", alts: ["finish", "end", "to end"] }, 
+        { fr: "l'ordinateur (m)", en: "computer", alts: ["pc", "laptop"] }, 
+        { fr: "la poubelle", en: "bin", alts: ["trash", "trash can", "garbage", "garbage can", "rubbish"] }, 
+        { fr: "le professeur principal", en: "form teacher", alts: ["homeroom teacher", "main teacher", "head teacher"] }, 
+        { fr: "la quatrième", en: "year 9", alts: ["8th grade", "grade 8"] }, 
+        { fr: "remarquer", en: "to notice", alts: ["notice", "observe"] }, 
+        { fr: "le sac", en: "bag", alts: ["sack", "backpack"] }, 
+        { fr: "la seconde", en: "year 11", alts: ["10th grade", "grade 10"] }, 
+        { fr: "le singe", en: "monkey", alts: ["ape"] }, 
+        { fr: "la sixième", en: "year 7", alts: ["6th grade", "grade 6"] }, 
+        { fr: "élève de sixième", en: "year 7 pupil", alts: ["year 7 student", "6th grade student", "6th grader"] }, 
+        { fr: "sonner", en: "to ring", alts: ["ring", "sound"] }, 
+        { fr: "le tableau", en: "board", alts: ["whiteboard", "blackboard", "chalkboard"] }, 
+        { fr: "le trajet", en: "journey", alts: ["trip", "ride"] }, 
+        { fr: "voyager", en: "to travel", alts: ["travel"] }
+    ];
+
+    const list2 = [
+        { fr: "annulé(e)", en: "cancelled", alts: ["canceled"] }, 
+        { fr: "annuler", en: "to cancel", alts: ["cancel"] }, 
+        { fr: "la charité", en: "charity", alts: [] }, 
+        { fr: "le bâtiment", en: "building", alts: ["structure"] }, 
+        { fr: "bénévolement", en: "without being paid", alts: ["voluntarily", "volunteer", "for free", "unpaid"] }, 
+        { fr: "les bijoux (m)", en: "jewellery", alts: ["jewelry", "jewels"] }, 
+        { fr: "le bois", en: "wood", alts: ["timber"] }, 
+        { fr: "la cabane", en: "hut", alts: ["cabin", "shack"] }, 
+        { fr: "le chantier", en: "work site", alts: ["construction site", "site"] }, 
+        { fr: "choisir", en: "to choose", alts: ["choose", "select"] }, 
+        { fr: "connaître", en: "to know", alts: ["know", "be familiar with"] }, 
+        { fr: "le/la correspondant(e)", en: "pen friend", alts: ["pen pal", "penpal", "correspondent"] }, 
+        { fr: "le diplôme", en: "qualification", alts: ["diploma", "degree"] }, 
+        { fr: "diplômé(e)", en: "qualified", alts: ["graduated"] }, 
+        { fr: "l'échange (m)", en: "exchange", alts: [] }, 
+        { fr: "la gestion", en: "management", alts: ["administration"] }, 
+        { fr: "l'incendie (m)", en: "fire", alts: ["wildfire", "house fire"] }, 
+        { fr: "interdit(e)", en: "forbidden", alts: ["prohibited", "banned"] }, 
+        { fr: "manquer", en: "to miss", alts: ["miss"] }, 
+        { fr: "se maquiller", en: "to put some make-up on", alts: ["put on makeup", "wear makeup", "to put on makeup"] }, 
+        { fr: "participer", en: "to take part", alts: ["participate", "to participate", "join in"] }, 
+        { fr: "perdre", en: "to lose", alts: ["lose"] }, 
+        { fr: "permettre", en: "to allow", alts: ["allow", "permit"] }, 
+        { fr: "porter", en: "to wear", alts: ["wear", "carry"] }, 
+        { fr: "promouvoir", en: "to promote", alts: ["promote", "encourage"] }, 
+        { fr: "punir", en: "to punish", alts: ["punish", "discipline"] }, 
+        { fr: "récolter des fonds", en: "to raise funds", alts: ["raise money", "fundraise", "to raise money"] }, 
+        { fr: "réfléchir", en: "to think", alts: ["think", "reflect", "to reflect"] }, 
+        { fr: "le résultat", en: "result", alts: ["outcome", "score"] }, 
+        { fr: "en retard", en: "late", alts: ["delayed"] }, 
+        { fr: "la retenue", en: "detention", alts: [] }, 
+        { fr: "réussir", en: "to succeed", alts: ["succeed", "pass", "to pass"] }, 
+        { fr: "la salle de classe", en: "classroom", alts: ["class", "room"] }
+    ];
+
+    let pools = { flash: 'both', quiz: 'both', spell: 'both' };
+    let modesInitialized = { flash: false, quiz: false, spell: false };
+    
+    // GAMIFICATION & SMART STUDY
+    let score = 0;
+    let streak = 0;
+    let hasFailedCurrent = false; 
+    let hardWords = []; 
+
+    // --- UTILITIES ---
+    function toggleTheme(checkbox) { document.body.setAttribute('data-theme', checkbox.checked ? 'dark' : 'light'); }
+    function scrollToElement(id) { document.getElementById(id).scrollIntoView({behavior: 'smooth'}); }
+
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('main-nav');
+        if (window.scrollY > 50) nav.classList.add('sticky-active');
+        else nav.classList.remove('sticky-active');
+    });
+
+    function populateTables() {
+        const t1 = document.querySelector('#table1 tbody'); const t2 = document.querySelector('#table2 tbody');
+        list1.forEach(i => t1.innerHTML += `<tr><td><strong>${i.fr}</strong></td><td>${i.en} <br><span style="font-size:0.85em; color:var(--text-muted)">${i.alts.length > 0 ? '(or: ' + i.alts.join(', ') + ')' : ''}</span></td></tr>`);
+        list2.forEach(i => t2.innerHTML += `<tr><td><strong>${i.fr}</strong></td><td>${i.en} <br><span style="font-size:0.85em; color:var(--text-muted)">${i.alts.length > 0 ? '(or: ' + i.alts.join(', ') + ')' : ''}</span></td></tr>`);
+    }
+
+    function showView(id) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+        document.getElementById(id).classList.add('active-view');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById('btn-'+id).classList.add('active-btn');
+        document.getElementById('stats-hud').style.display = (id === 'quiz' || id === 'spell') ? 'flex' : 'none';
+        
+        hasFailedCurrent = false; 
+        if (id === 'spell') { document.getElementById('spell-input').value = ""; document.getElementById('spell-input').focus(); }
+        if (id === 'quiz') { document.getElementById('quiz-input').value = ""; document.getElementById('quiz-input').focus(); }
+    }
+
+    function withModeInit(modeId) {
+        showView(modeId);
+        if (!modesInitialized[modeId]) {
+            if (modeId === 'flash') resetFlashHistory();
+            if (modeId === 'quiz') nextQuiz();
+            if (modeId === 'spell') nextSpell();
+            modesInitialized[modeId] = true;
+        }
+    }
+
+    function setFilter(view, listId) {
+        pools[view] = listId;
+        document.querySelectorAll(`#${view} .filter-btn`).forEach(b => b.classList.remove('active-filter'));
+        document.getElementById(`${view}-filter-${listId}`).classList.add('active-filter');
+        hasFailedCurrent = false;
+        if (view === 'flash') resetFlashHistory();
+        if (view === 'quiz') nextQuiz();
+        if (view === 'spell') nextSpell();
+    }
+
+    function getActivePool(view) {
+        let basePool = [];
+        if (pools[view] === '1') basePool = list1;
+        else if (pools[view] === '2') basePool = list2;
+        else basePool = [...list1, ...list2];
+
+        if (hardWords.length > 0 && Math.random() < 0.20 && (view === 'quiz' || view === 'spell')) {
+            return hardWords; 
+        }
+        return basePool;
+    }
+
+    function updateStats(isCorrect, isHalfPoint) {
+        if (isCorrect) {
+            streak++; score += isHalfPoint ? 0.5 : 1;
+            if (!isHalfPoint) shootConfetti(); 
+        } else { streak = 0; }
+        document.getElementById('score-val').innerText = score;
+        document.getElementById('streak-val').innerText = streak;
+    }
+
+    function triggerShake(inputId) {
+        const input = document.getElementById(inputId);
+        input.classList.remove('shake-error');
+        void input.offsetWidth; 
+        input.classList.add('shake-error');
+        setTimeout(() => input.classList.remove('shake-error'), 400);
+    }
+
+    function shootConfetti() {
+        const colors = ['#002654', '#ED2939', '#ffffff', '#f1c40f'];
+        for(let i=0; i<45; i++) {
+            let conf = document.createElement('div'); conf.classList.add('confetti');
+            conf.style.left = Math.random() * 100 + 'vw'; conf.style.top = '-10px';
+            conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+            conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+            conf.style.transform = `rotate(${Math.random()*360}deg)`;
+            conf.style.transition = `top ${Math.random() * 1.5 + 1}s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 1s`;
+            document.body.appendChild(conf);
+            setTimeout(() => { conf.style.top = '100vh'; conf.style.opacity = '0'; }, 50);
+            setTimeout(() => conf.remove(), 2500);
+        }
+    }
+
+    function cleanEnglish(str) { return str.toLowerCase().replace(/^(to |a |an |the |some )/g, '').trim(); }
+    function removeAccents(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+    function cleanFrench(str) { return str.toLowerCase().replace(/\(m\)|\(f\)/g, '').trim(); }
+
+    // --- FLASHCARD LOGIC ---
+    let flashHistory = []; let historyIndex = -1; let currentFlash = {};
+    function updateFlashcardDisplay(item) {
+        document.querySelector('.card').classList.remove('flipped'); currentFlash = item;
+        setTimeout(() => { 
+            document.getElementById('flash-front').innerText = currentFlash.fr; 
+            document.getElementById('flash-back').innerText = currentFlash.en; 
+            document.getElementById('flash-back-sub').innerText = currentFlash.alts.length > 0 ? `(or: ${currentFlash.alts.join(', ')})` : "";
+        }, 200);
+        document.getElementById('btn-prev').style.visibility = historyIndex > 0 ? 'visible' : 'hidden';
+    }
+    function nextFlashcard() {
+        const pool = getActivePool('flash');
+        if (historyIndex < flashHistory.length - 1) { historyIndex++; updateFlashcardDisplay(flashHistory[historyIndex]); } 
+        else { let newItem = pool[Math.floor(Math.random() * pool.length)]; flashHistory.push(newItem); historyIndex++; updateFlashcardDisplay(newItem); }
+    }
+    function prevFlashcard() { if (historyIndex > 0) { historyIndex--; updateFlashcardDisplay(flashHistory[historyIndex]); } }
+    function resetFlashHistory() { flashHistory = []; historyIndex = -1; nextFlashcard(); }
+
+    // --- QUIZ LOGIC ---
+    let currentQuiz = {};
+    function nextQuiz() {
+        hasFailedCurrent = false; 
+        const pool = getActivePool('quiz');
+        currentQuiz = pool[Math.floor(Math.random() * pool.length)];
+        document.getElementById('quiz-word').innerText = currentQuiz.fr;
+        document.getElementById('quiz-input').value = "";
+        document.getElementById('quiz-feedback').innerText = "";
+        document.getElementById('quiz-input').focus();
+    }
+    
+    function checkQuiz() {
+        const inputRaw = document.getElementById('quiz-input').value.trim().toLowerCase();
+        if(!inputRaw) return;
+
+        const inputClean = cleanEnglish(inputRaw);
+        const correctRaw = currentQuiz.en.toLowerCase();
+        const correctClean = cleanEnglish(correctRaw);
+        const fb = document.getElementById('quiz-feedback');
+        
+        let isCorrect = false;
+
+        // Check primary answers
+        if(inputRaw === correctRaw || inputClean === correctClean) {
+            isCorrect = true;
+        } 
+        // Check ALL synonyms
+        else if (currentQuiz.alts && currentQuiz.alts.length > 0) {
+            for(let alt of currentQuiz.alts) {
+                if(inputRaw === alt.toLowerCase() || inputClean === cleanEnglish(alt)) {
+                    isCorrect = true;
+                    break;
+                }
+            }
+        }
+
+        if(isCorrect) {
+            SFX.correct();
+            fb.innerText = "Parfait! 🌟"; fb.style.color = "var(--green)";
+            if(!hasFailedCurrent) updateStats(true, false); 
+            hardWords = hardWords.filter(w => w.fr !== currentQuiz.fr);
+            setTimeout(nextQuiz, 700); 
+        } else {
+            SFX.wrong();
+            triggerShake('quiz-input');
+            hasFailedCurrent = true; 
+            hardWords.push(currentQuiz); 
+            fb.innerText = "❌ Answer: " + currentQuiz.en + " (Type to continue)"; 
+            fb.style.color = "var(--accent)";
+            updateStats(false, false); 
+        }
+    }
+
+    // --- SPELLING LOGIC ---
+    let currentSpell = {};
+    function nextSpell() {
+        hasFailedCurrent = false; 
+        const pool = getActivePool('spell');
+        currentSpell = pool[Math.floor(Math.random() * pool.length)];
+        
+        // Show English word and hints if it has synonyms so they know what French word is expected
+        let promptText = currentSpell.en;
+        if(currentSpell.alts && currentSpell.alts.length > 0) {
+            promptText += ` \n<span style="font-size:0.4em; color:var(--text-muted); display:block; margin-top:5px;">(or: ${currentSpell.alts[0]})</span>`;
+        }
+        document.getElementById('spell-word').innerHTML = promptText;
+        
+        document.getElementById('spell-input').value = "";
+        document.getElementById('spell-feedback').innerText = "";
+        document.getElementById('spell-input').focus();
+    }
+
+    function checkSpell() {
+        const inputRaw = document.getElementById('spell-input').value.trim().toLowerCase();
+        if(!inputRaw) return;
+
+        const correctRaw = currentSpell.fr.toLowerCase();
+        const correctClean = cleanFrench(correctRaw); 
+        const fb = document.getElementById('spell-feedback');
+        
+        if(inputRaw === correctRaw || inputRaw === correctClean) {
+            SFX.correct();
+            fb.innerText = "Très bien! ✨"; fb.style.color = "var(--green)";
+            if(!hasFailedCurrent) updateStats(true, false); 
+            speakFrench(currentSpell.fr); 
+            hardWords = hardWords.filter(w => w.en !== currentSpell.en);
+            setTimeout(nextSpell, 900);
+        } 
+        else if (removeAccents(inputRaw) === removeAccents(correctClean)) {
+            SFX.halfPoint();
+            triggerShake('spell-input');
+            fb.innerText = `Almost! Watch accents: ${correctClean} (Type to continue)`; fb.style.color = "#e67e22";
+            if(!hasFailedCurrent) updateStats(true, true); 
+            hasFailedCurrent = true; 
+            speakFrench(currentSpell.fr); 
+        }
+        else {
+            SFX.wrong();
+            triggerShake('spell-input');
+            hasFailedCurrent = true; 
+            hardWords.push(currentSpell);
+            fb.innerText = "❌ Answer: " + correctRaw + " (Type to continue)"; 
+            fb.style.color = "var(--accent)";
+            updateStats(false, false); 
+        }
+    }
+
+    function showSpellAnswer() {
+        const fb = document.getElementById('spell-feedback');
+        fb.innerText = "Answer: " + currentSpell.fr + " (Type to continue)"; 
+        fb.style.color = "var(--primary)";
+        hasFailedCurrent = true;
+        updateStats(false, false); 
+        speakFrench(currentSpell.fr);
+        document.getElementById('spell-input').focus();
+    }
+
+    function skipQuestion(mode) {
+        updateStats(false, false); 
+        if(mode === 'quiz') nextQuiz();
+        if(mode === 'spell') nextSpell();
+    }
+
+    function insertAccent(accent) {
+        const input = document.getElementById('spell-input');
+        const start = input.selectionStart; const end = input.selectionEnd; const text = input.value;
+        input.value = text.slice(0, start) + accent + text.slice(end);
+        input.focus(); input.setSelectionRange(start + 1, start + 1);
+    }
+
+    function speakFrench(text) {
+        if (!text || typeof window.speechSynthesis === 'undefined') return;
+        let cleanText = text.replace(/\(m\)|\(f\)/g, '');
+        window.speechSynthesis.cancel();
+        let utterance = new SpeechSynthesisUtterance(cleanText);
+        let voices = window.speechSynthesis.getVoices();
+        let frenchVoice = voices.find(v => v.lang.startsWith('fr'));
+        if (frenchVoice) utterance.voice = frenchVoice;
+        utterance.lang = 'fr-FR'; utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    document.getElementById("quiz-input").addEventListener("keyup", (e) => { if (e.key === "Enter") checkQuiz(); });
+    document.getElementById("spell-input").addEventListener("keyup", (e) => { if (e.key === "Enter") checkSpell(); });
+
+    populateTables();
+</script>
+</body>
+</html>
